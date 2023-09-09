@@ -1,0 +1,32 @@
+{
+	"schemaVersion": 1,
+	"id": "loose-litematica",
+	"version": "${version}",
+	"name": "Loose-Litematica",
+	"description": "Make litematica more tolerant.",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"lovexyn0827.loosenlitematica.LLMod"
+		]
+	},
+	"mixins": [
+		"loose-litematica.mixins.json"
+	],
+	"depends": {
+		"fabricloader": "*",
+		"minecraft": "*",
+		"java": ">=8",
+		"litematica": "*"
+	},
+	"suggests": {
+	}
+}
