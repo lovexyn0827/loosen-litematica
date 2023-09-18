@@ -9,8 +9,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 
 import net.minecraft.block.BlockState;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Util;
+import net.minecraft.util.registry.Registry;
 
 public class BulitinGroups {
 	public static final Collection<CompatibleStateGroup> GROUPS;
@@ -19,7 +19,7 @@ public class BulitinGroups {
 	static {
 		Map<BlockProperties, Set<BlockState>> temp = new HashMap<>();
 		long start = Util.getMeasuringTimeNano();
-		Registries.BLOCK.forEach((b) -> {
+		Registry.BLOCK.forEach((b) -> {
 			b.getStateManager().getStates().forEach((bs) -> {
 				temp.computeIfAbsent(BlockProperties.of(bs), (bp) -> Sets.newHashSet()).add(bs);
 			});
