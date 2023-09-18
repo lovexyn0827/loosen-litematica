@@ -6,7 +6,8 @@
 		"SchematicVerifierMixin", 
 		"MinecraftServerMixin", 
 		"ChunkRendererSchematicVboMixin", 
-		"KeyboardMixin"
+		"KeyboardMixin", 
+		"FireBlockAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

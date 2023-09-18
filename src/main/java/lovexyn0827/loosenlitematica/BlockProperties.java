@@ -6,6 +6,7 @@ import java.util.function.Predicate;
 
 import com.google.common.collect.ImmutableSet;
 
+import lovexyn0827.loosenlitematica.mixin.FireBlockAccessor;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -17,6 +18,7 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
+import net.minecraft.util.Util;
 import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
@@ -62,7 +64,6 @@ public class BlockProperties {
 	public final BlockState state;
 	public final FluidState fluid;
 	
-	@SuppressWarnings("deprecation")
 	private BlockProperties(BlockState state) {
 		this.blockClass = state.getBlock().getClass();
 		this.slipperiness = state.getBlock().getSlipperiness();
@@ -70,9 +71,16 @@ public class BlockProperties {
 		this.jumpVelocityMultiplier = state.getBlock().getJumpVelocityMultiplier();
 		this.dynamicBounds = state.getBlock().hasDynamicBounds();
 		this.resistance = state.getBlock().getBlastResistance();
-		this.burnable = state.isBurnable();
+		this.burnable = ((FireBlockAccessor) Blocks.FIRE).isBurnable(state);
 		this.luminance = state.getLuminance();
-		this.soild = state.isSolid();
+		this.soild = Util.make(() -> {
+			try {
+				return state.isSolidBlock(null, BlockPos.ORIGIN);
+			} catch (Exception e) {
+				// XXX
+				return false;
+			}
+		});
 		this.opaque = state.isOpaque();
 		this.pistonBehavior = state.getPistonBehavior();
 		this.state = state;
