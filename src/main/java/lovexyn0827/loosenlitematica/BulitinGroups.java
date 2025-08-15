@@ -7,7 +7,6 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
-
 import net.minecraft.block.BlockState;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Util;
@@ -25,7 +24,6 @@ public class BulitinGroups {
 			});
 		});
 		GROUPS = temp.values().stream()
-				.sorted((s1, s2) -> s2.size() - s1.size())
 				.filter((s) -> s.size() > 1)
 				.map(CompatibleStateGroup::new)
 				.toList();
@@ -35,7 +33,7 @@ public class BulitinGroups {
 				.filter((e) -> e.size() > 1)
 				.forEach((set) -> set.forEach((state) -> b.put(state, new CompatibleStateGroup(set))));
 		GROUPS_BY_STATE = b.build();
-		System.out.println((Util.getMeasuringTimeNano() - start) / 10E8D);
+		System.out.println((Util.getMeasuringTimeNano() - start) / 10E9D);
 		System.out.println(GROUPS.size());
 		GROUPS.getClass();
 	}

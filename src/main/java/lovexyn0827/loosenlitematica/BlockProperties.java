@@ -1,11 +1,14 @@
 package lovexyn0827.loosenlitematica;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -17,8 +20,11 @@ import net.minecraft.fluid.FluidState;
 import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.state.property.Properties;
 import net.minecraft.state.property.Property;
+import net.minecraft.util.Util;
 import net.minecraft.util.function.BooleanBiFunction;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.shape.VoxelSet;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.util.shape.VoxelShapes;
 
@@ -26,6 +32,51 @@ public class BlockProperties {
 	private static final Set<Class<?>> NO_SHAPE_CHECK_CLASS = ImmutableSet.of(
 			PistonExtensionBlock.class, 
 			ShulkerBoxBlock.class);
+	private static final ImmutableMap<BlockState, Set<BlockState>> MANDATED_EQVIVALENT_CLASSES = Util.make(() -> {
+		Set<ImmutableSet<BlockState>> unindexed = new HashSet<>();
+		unindexed.add(ImmutableSet.of(Blocks.GLASS.getDefaultState(), 
+				Blocks.BLACK_STAINED_GLASS.getDefaultState(), 
+				Blocks.BLUE_STAINED_GLASS.getDefaultState(), 
+				Blocks.BROWN_STAINED_GLASS.getDefaultState(), 
+				Blocks.CYAN_STAINED_GLASS.getDefaultState(), 
+				Blocks.GRAY_STAINED_GLASS.getDefaultState(), 
+				Blocks.GREEN_STAINED_GLASS.getDefaultState(), 
+				Blocks.LIGHT_BLUE_STAINED_GLASS.getDefaultState(), 
+				Blocks.LIGHT_GRAY_STAINED_GLASS.getDefaultState(), 
+				Blocks.LIME_STAINED_GLASS.getDefaultState(), 
+				Blocks.MAGENTA_STAINED_GLASS.getDefaultState(), 
+				Blocks.ORANGE_STAINED_GLASS.getDefaultState(), 
+				Blocks.PINK_STAINED_GLASS.getDefaultState(), 
+				Blocks.PURPLE_STAINED_GLASS.getDefaultState(), 
+				Blocks.RED_STAINED_GLASS.getDefaultState(), 
+				Blocks.WHITE_STAINED_GLASS.getDefaultState(), 
+				Blocks.YELLOW_STAINED_GLASS.getDefaultState()));
+		unindexed.add(ImmutableSet.of(Blocks.GLASS_PANE.getDefaultState(), 
+				Blocks.BLACK_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.BLUE_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.BROWN_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.CYAN_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.GRAY_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.GREEN_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.LIGHT_BLUE_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.LIGHT_GRAY_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.LIME_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.MAGENTA_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.ORANGE_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.PINK_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.PURPLE_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.RED_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.WHITE_STAINED_GLASS_PANE.getDefaultState(), 
+				Blocks.YELLOW_STAINED_GLASS_PANE.getDefaultState()));
+		ImmutableMap.Builder<BlockState, Set<BlockState>> out = ImmutableMap.builder();
+		for (Set<BlockState> set : unindexed) {
+			for (BlockState state : set) {
+				out.put(state, set);
+			}
+		}
+		
+		return out.build();
+	});
 	private static final Predicate<BlockState> FORCE_STATE_AND_OWNER_PRED = (s) -> {
 		return s.emitsRedstonePower()
 				|| s.contains(Properties.POWERED) 
@@ -85,8 +136,11 @@ public class BlockProperties {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(blockClass, burnable, dynamicBounds, jumpVelocityMultiplier, luminance, soild,
-				pistonBehavior, resistance, slipperiness, velocityMultiplier, fluid);
+		if (MANDATED_EQVIVALENT_CLASSES.containsKey(this.state)) {
+			return MANDATED_EQVIVALENT_CLASSES.get(this.state).hashCode();
+		} else {
+			return Objects.hash(this.blockClass);
+		}
 	}
 
 	@Override
@@ -104,6 +158,11 @@ public class BlockProperties {
 		}
 		
 		BlockProperties other = (BlockProperties) obj;
+		if (MANDATED_EQVIVALENT_CLASSES.containsKey(this.state) 
+				&& MANDATED_EQVIVALENT_CLASSES.get(this.state).contains(other.state)) {
+			return true;
+		}
+		
 		return Objects.equals(blockClass, other.blockClass) && burnable == other.burnable
 				&& dynamicBounds == other.dynamicBounds
 				&& Float.floatToIntBits(jumpVelocityMultiplier) == Float.floatToIntBits(other.jumpVelocityMultiplier)
@@ -111,7 +170,7 @@ public class BlockProperties {
 				&& soild == other.soild 
 				&& opaque == other.opaque
 				&& pistonBehavior == other.pistonBehavior
-				&& Float.floatToIntBits(resistance) == Float.floatToIntBits(other.resistance)
+				&& (resistance >= 9.0F || resistance < 0) ^ (other.resistance >= 9.0F || other.resistance < 0)
 				&& Float.floatToIntBits(slipperiness) == Float.floatToIntBits(other.slipperiness)
 				&& Float.floatToIntBits(velocityMultiplier) == Float.floatToIntBits(other.velocityMultiplier)
 				&& shapesMatch(this.state, other.state)
@@ -150,14 +209,42 @@ public class BlockProperties {
 		try {
 			return NO_SHAPE_CHECK_CLASS.contains(self.getBlock().getClass()) 
 					|| NO_SHAPE_CHECK_CLASS.contains(other.getBlock().getClass())
-					|| isShapePairTheSame(self.getCollisionShape(null, BlockPos.ORIGIN), 
-							other.getCollisionShape(null, BlockPos.ORIGIN));
+					|| isShapePairTheSame(self.getOutlineShape(null, BlockPos.ORIGIN), 
+							other.getOutlineShape(null, BlockPos.ORIGIN));
 		} catch (NullPointerException e) {
 			return false;
 		}
 	}
 
 	private static boolean isShapePairTheSame(VoxelShape s0, VoxelShape s1) {
-		return !VoxelShapes.matchesAnywhere(s0, s1, BooleanBiFunction.NOT_SAME);
+		try {
+			Field voxelsField = VoxelShape.class.getDeclaredField("voxels");
+			voxelsField.setAccessible(true);
+			VoxelSet v0 = (VoxelSet) voxelsField.get(s0);
+			VoxelSet v1 = (VoxelSet) voxelsField.get(s1);
+			if(v0.getClass() != v1.getClass() || s0.getClass() != s1.getClass()) {
+				return false;
+			}
+			
+			if(!s0.getBoundingBox().equals(s1.getBoundingBox())) {
+				return false;
+			}
+			
+			if(!s0.getBoundingBoxes().equals(s1.getBoundingBoxes())) {
+				return false;
+			}
+			
+			Method getPoints = VoxelShape.class.getDeclaredMethod("getPointPositions", Direction.Axis.class);
+			getPoints.setAccessible(true);
+			if(!getPoints.invoke(s0, Direction.Axis.X).equals(getPoints.invoke(s1, Direction.Axis.X))
+					|| !getPoints.invoke(s0, Direction.Axis.Y).equals(getPoints.invoke(s1, Direction.Axis.Y))
+					|| !getPoints.invoke(s0, Direction.Axis.Z).equals(getPoints.invoke(s1, Direction.Axis.Z))) {
+				return false;
+			}
+			
+			return !VoxelShapes.matchesAnywhere(s0, s1, BooleanBiFunction.NOT_SAME);
+		} catch (Exception e) {
+			return false;
+		}
 	}
 }

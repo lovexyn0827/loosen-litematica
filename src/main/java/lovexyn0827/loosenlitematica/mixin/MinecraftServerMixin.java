@@ -16,6 +16,6 @@ import net.minecraft.server.MinecraftServer;
 public abstract class MinecraftServerMixin {
 	@Inject(method = "tick", at = @At(value = "RETURN"))
 	public void onTicked(BooleanSupplier bs, CallbackInfo ci) {
-		BulitinGroups.GROUPS.getClass();
+		BulitinGroups.GROUPS.getClass();	// TODO Delete debug code
 	}
 }
