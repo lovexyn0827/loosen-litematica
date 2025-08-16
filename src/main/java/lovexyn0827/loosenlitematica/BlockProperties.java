@@ -1,7 +1,5 @@
 package lovexyn0827.loosenlitematica;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -9,6 +7,8 @@ import java.util.function.Predicate;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+
+import lovexyn0827.loosenlitematica.mixin.VoxelShapeAccessor;
 import net.minecraft.block.AbstractRailBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -163,14 +163,15 @@ public class BlockProperties {
 			return true;
 		}
 		
-		return Objects.equals(blockClass, other.blockClass) && burnable == other.burnable
+		return Objects.equals(blockClass, other.blockClass) 
+				&& burnable == other.burnable
 				&& dynamicBounds == other.dynamicBounds
 				&& Float.floatToIntBits(jumpVelocityMultiplier) == Float.floatToIntBits(other.jumpVelocityMultiplier)
 				&& luminance == other.luminance 
 				&& soild == other.soild 
 				&& opaque == other.opaque
 				&& pistonBehavior == other.pistonBehavior
-				&& (resistance >= 9.0F || resistance < 0) ^ (other.resistance >= 9.0F || other.resistance < 0)
+				&& !((resistance >= 9.0F || resistance < 0) ^ (other.resistance >= 9.0F || other.resistance < 0))
 				&& Float.floatToIntBits(slipperiness) == Float.floatToIntBits(other.slipperiness)
 				&& Float.floatToIntBits(velocityMultiplier) == Float.floatToIntBits(other.velocityMultiplier)
 				&& shapesMatch(this.state, other.state)
@@ -218,10 +219,8 @@ public class BlockProperties {
 
 	private static boolean isShapePairTheSame(VoxelShape s0, VoxelShape s1) {
 		try {
-			Field voxelsField = VoxelShape.class.getDeclaredField("voxels");
-			voxelsField.setAccessible(true);
-			VoxelSet v0 = (VoxelSet) voxelsField.get(s0);
-			VoxelSet v1 = (VoxelSet) voxelsField.get(s1);
+			VoxelSet v0 = ((VoxelShapeAccessor) s0).getVoxels$0827();
+			VoxelSet v1 = ((VoxelShapeAccessor) s1).getVoxels$0827();
 			if(v0.getClass() != v1.getClass() || s0.getClass() != s1.getClass()) {
 				return false;
 			}
@@ -234,11 +233,9 @@ public class BlockProperties {
 				return false;
 			}
 			
-			Method getPoints = VoxelShape.class.getDeclaredMethod("getPointPositions", Direction.Axis.class);
-			getPoints.setAccessible(true);
-			if(!getPoints.invoke(s0, Direction.Axis.X).equals(getPoints.invoke(s1, Direction.Axis.X))
-					|| !getPoints.invoke(s0, Direction.Axis.Y).equals(getPoints.invoke(s1, Direction.Axis.Y))
-					|| !getPoints.invoke(s0, Direction.Axis.Z).equals(getPoints.invoke(s1, Direction.Axis.Z))) {
+			if(!((VoxelShapeAccessor) s0).getPointPositions$0827(Direction.Axis.X).equals(((VoxelShapeAccessor) s1).getPointPositions$0827(Direction.Axis.X))
+					|| !((VoxelShapeAccessor) s0).getPointPositions$0827(Direction.Axis.Y).equals(((VoxelShapeAccessor) s1).getPointPositions$0827(Direction.Axis.Y))
+					|| !((VoxelShapeAccessor) s0).getPointPositions$0827(Direction.Axis.Z).equals(((VoxelShapeAccessor) s1).getPointPositions$0827(Direction.Axis.Z))) {
 				return false;
 			}
 			

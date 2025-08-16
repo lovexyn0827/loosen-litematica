@@ -1,21 +1,21 @@
 package lovexyn0827.loosenlitematica;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.command.argument.BlockArgumentParser;
+import net.minecraft.registry.RegistryWrapper;
 
 public class CompatibleStateGroup {
 	final Set<BlockState> states;
@@ -28,44 +28,47 @@ public class CompatibleStateGroup {
 		return this.states.contains(s1) && this.states.contains(s2);
 	}
 	
-	public void writeJson(File f) {
-		try(BufferedWriter w = new BufferedWriter(new FileWriter(f))){
-			JsonWriter jw = new Gson().newJsonWriter(w);
-			jw.beginArray();
-			for(BlockState bs : this.states) {
-				jw.value(bs.toString());
-			}
-			
-			jw.endArray();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	public void writeJson(JsonWriter jw) throws IOException {
+		jw.beginArray();
+		for(BlockState bs : this.states) {
+			jw.value(bs.toString());
 		}
+		
+		jw.endArray();
 	}
 	
 	/**
 	 * @return {@code CompatibleStateGroup} represented by the JSON content in {@code f}, or {@code null};
+	 * @throws IOException 
 	 */
 	@Nullable
-	public CompatibleStateGroup fromJson(File f) {
-		try(BufferedReader r = new BufferedReader(new FileReader(f))) {
-			JsonReader jr = new Gson().newJsonReader(r);
-			jr.beginArray();
-			Set<BlockState> states = new HashSet<>();
-			while(jr.hasNext()) {
-				states.add(toBlockState(jr.nextString()));
+	public static CompatibleStateGroup fromJson(RegistryWrapper<Block> reg, JsonReader jr) throws IOException {
+		jr.beginArray();
+		Set<BlockState> states = new HashSet<>();
+		while(jr.hasNext()) {
+			BlockState state = toBlockState(reg, jr.nextString());
+			if (state != null) {
+				states.add(state);
 			}
-			
-			jr.endArray();
-			return new CompatibleStateGroup(states);
-		} catch (IOException e) {
-			e.printStackTrace();
+		}
+		
+		jr.endArray();
+		return new CompatibleStateGroup(states);
+	}
+
+	private static BlockState toBlockState(RegistryWrapper<Block> reg, String in) {
+		try {
+			return BlockArgumentParser.block(reg, new StringReader(in), false).blockState();
+		} catch (CommandSyntaxException e) {
 			return null;
 		}
 	}
 
-	private static BlockState toBlockState(String nextString) {
-		// TODO Auto-generated method stub
-		return null;
+	public int size() {
+		return this.states.size();
+	}
+
+	public void forEach(Consumer<BlockState> act) {
+		this.states.forEach(act);
 	}
 }
